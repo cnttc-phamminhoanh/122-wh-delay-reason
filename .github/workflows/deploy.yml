@@ -1,0 +1,52 @@
+name: Deploy 122 WH Delay Reason
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: wh-delay-reason-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: /home/it/122-wh-delay-reason
+
+    steps:
+      - name: Show deployment info
+        run: |
+          echo "===== Deploy 122-wh-delay-reason ====="
+          echo "Branch : ${{ github.ref_name }}"
+          echo "Commit : ${{ github.sha }}"
+          echo "Time   : $(date)"
+
+      - name: Update source
+        run: |
+          git fetch origin
+          git reset --hard origin/master
+          git clean -fd -e .env -e node_modules -e .next
+
+      - name: Install dependencies
+        run: |
+          pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: |
+          pnpm build
+
+      - name: Start or Restart PM2
+        run: |
+          pm2 describe wh-delay-reason > /dev/null 2>&1 \
+            && pm2 restart wh-delay-reason \
+            || pm2 start ecosystem.config.js
+
+      - name: Verify application
+        run: |
+          pm2 status
+          pm2 logs wh-delay-reason --lines 20 --nostream
