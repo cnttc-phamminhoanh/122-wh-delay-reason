@@ -36,6 +36,11 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
 
+      - name: Install stock_aging_alert_wecom dependencies
+        working-directory: /home/it/122-wh-delay-reason/stock_aging_alert_wecom
+        run: |
+          /home/it/.nvm/versions/node/v22.18.0/bin/npm ci
+
       - name: Build application
         run: |
           pnpm build
