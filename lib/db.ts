@@ -4,6 +4,7 @@ export type StockReason = {
   id: number
   goods_no: string
   made_lot: string
+  cust_name: string | null
   reason_dl: string | null
   updated_at: string
 }
@@ -64,6 +65,7 @@ export type SearchParams = {
   filledOnly?: boolean
   goodsNo?: string
   lot?: string
+  buyer?: string
   missingOnly?: boolean
 }
 
@@ -71,10 +73,12 @@ export type SearchParams = {
 // SEARCH
 // =========================
 
+
 export async function searchReasons({
   q,
   goodsNo,
   lot,
+  buyer,
   missingOnly,
   filledOnly,
 }: SearchParams) {
@@ -83,24 +87,23 @@ export async function searchReasons({
 
   const conditions: string[] = []
 
-  // Tìm theo goods_no hoặc made_lot
+  // Tìm theo mã hàng, lot hoặc Buyer
   if (q) {
-    request.input(
-      'q',
-      sql.NVarChar(60),
-      `%${q}%`
-    )
+    request.input('q', sql.NVarChar(60), `%${q}%`)
 
-    conditions.push(
-      '(goods_no LIKE @q OR made_lot LIKE @q)'
-    )
+    conditions.push(`(
+      r.goods_no LIKE @q
+      OR r.made_lot LIKE @q
+      OR s.cust_name LIKE @q
+    )`)
   }
 
   // Chỉ lấy dòng đã có reason
   if (filledOnly) {
-    conditions.push(
-      "(reason_dl IS NOT NULL AND LTRIM(RTRIM(reason_dl)) <> '')"
-    )
+    conditions.push(`
+      r.reason_dl IS NOT NULL
+      AND LTRIM(RTRIM(r.reason_dl)) <> ''
+    `)
   }
 
   // Tìm theo goods_no
@@ -111,9 +114,7 @@ export async function searchReasons({
       `%${goodsNo}%`
     )
 
-    conditions.push(
-      'goods_no LIKE @goodsNo'
-    )
+    conditions.push('r.goods_no LIKE @goodsNo')
   }
 
   // Tìm theo made_lot
@@ -124,16 +125,26 @@ export async function searchReasons({
       `%${lot}%`
     )
 
-    conditions.push(
-      'made_lot LIKE @lot'
+    conditions.push('r.made_lot LIKE @lot')
+  }
+
+  // Tìm theo Buyer
+  if (buyer) {
+    request.input(
+      'buyer',
+      sql.NVarChar(100),
+      `%${buyer}%`
     )
+
+    conditions.push('s.cust_name LIKE @buyer')
   }
 
   // Chỉ lấy dòng chưa có reason
   if (missingOnly) {
-    conditions.push(
-      "(reason_dl IS NULL OR LTRIM(RTRIM(reason_dl)) = '')"
-    )
+    conditions.push(`(
+      r.reason_dl IS NULL
+      OR LTRIM(RTRIM(r.reason_dl)) = ''
+    )`)
   }
 
   const where = conditions.length
@@ -141,17 +152,29 @@ export async function searchReasons({
     : ''
 
   const result = await request.query<StockReason>(`
-    SELECT 
-      id,
-      goods_no,
-      made_lot,
-      reason_dl,
-      updated_at
-    FROM dbo.bi_stock_reason
+    SELECT
+      r.id,
+      r.goods_no,
+      r.made_lot,
+      s.cust_name,
+      r.reason_dl,
+      r.updated_at
+    FROM dbo.bi_stock_reason AS r
+
+    OUTER APPLY (
+      SELECT TOP (1)
+        st.cust_name
+      FROM dbo.bi_stock AS st
+      WHERE st.goods_no = r.goods_no
+        AND st.made_lot = r.made_lot
+      ORDER BY st.made_lot_date DESC
+    ) AS s
+
     ${where}
+
     ORDER BY
-      updated_at DESC,
-      id DESC
+      r.updated_at DESC,
+      r.id DESC
   `)
 
   return result.recordset

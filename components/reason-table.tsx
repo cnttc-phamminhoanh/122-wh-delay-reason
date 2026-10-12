@@ -26,6 +26,7 @@ export function ReasonTable({ rows, selectedKey, onSelect }: Props) {
           <TableRow className="hover:bg-transparent">
             <TableHead className="font-semibold">Goods No</TableHead>
             <TableHead className="font-semibold">Lot</TableHead>
+            <TableHead className="font-semibold">Buyer</TableHead>
             <TableHead className="min-w-56 font-semibold">Delay Reason</TableHead>
             <TableHead className="font-semibold">Cập nhật</TableHead>
           </TableRow>
@@ -54,6 +55,7 @@ export function ReasonTable({ rows, selectedKey, onSelect }: Props) {
                   </button>
                 </TableCell>
                 <TableCell className="font-medium tabular-nums">{row.made_lot}</TableCell>
+                <TableCell className="font-medium tabular-nums"> {row.cust_name?.trim() || '-'} </TableCell>
                 <TableCell className="max-w-md whitespace-normal">
                   {missing ? (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-medium text-warning-foreground ring-1 ring-warning/40">

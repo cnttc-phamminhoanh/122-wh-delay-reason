@@ -59,6 +59,7 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
   if (keyword) query.set('q', keyword)
   if (filters.goodsNo.trim()) query.set('goodsNo', filters.goodsNo.trim())
   if (filters.lot.trim()) query.set('lot', filters.lot.trim())
+  if (filters.buyer.trim()) query.set('buyer', filters.buyer.trim())
   if (filters.status !== 'all') query.set('status', filters.status)
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(`/api/reasons?${query}`, fetcher, {
@@ -126,6 +127,10 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
       label: statusLabel[filters.status],
       clear: () => setFilters({ ...filters, status: 'all' }),
     },
+    filters.buyer.trim() && {
+      label: `Buyer: ${filters.buyer.trim()}`,
+      clear: () => setFilters({ ...filters, buyer: '' }),
+    },
   ].filter(Boolean) as { label: string; clear: () => void }[]
 
   return (
@@ -170,7 +175,7 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 id="list-title" className="text-base font-semibold tracking-tight">
-                  Danh sách Delay Reason
+                  Danh sách 
                 </h2>
               </div>
               <Button
@@ -188,7 +193,7 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
             <div className="flex flex-col gap-2 sm:flex-row">
               <form role="search" onSubmit={handleSearch} className="flex flex-1 gap-2">
                 <label htmlFor="keyword" className="sr-only">
-                  Tìm theo Goods No hoặc Lot
+                  Tìm theo Goods No hoặc Lot hoặc Buyer
                 </label>
                 <div className="relative flex-1">
                   <Search
@@ -200,7 +205,7 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
                     type="search"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Tìm theo Goods No hoặc Lot..."
+                    placeholder="Tìm theo Goods No hoặc Lot hoặc Buyer..."
                     className="h-10 bg-muted/40 pl-9"
                   />
                 </div>

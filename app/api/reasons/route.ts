@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
       q: params.get('q')?.trim().slice(0, 50) || undefined,
       goodsNo: params.get('goodsNo')?.trim().slice(0, 50) || undefined,
       lot: params.get('lot')?.trim().slice(0, 50) || undefined,
+      buyer: params.get('buyer')?.trim().slice(0, 50) || undefined,
       missingOnly: status === 'missing' || params.get('missing') === '1',
       filledOnly: status === 'filled',
     })
