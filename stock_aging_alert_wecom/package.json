@@ -1,0 +1,26 @@
+{
+  "name": "stock_aging_alert_wecom",
+  "version": "1.0.0",
+  "description": "Cảnh báo hàng tồn kho quá hạn (>= 6 tháng) qua WeCom, tag đúng người phụ trách theo cust_name",
+  "main": "scripts/run-job-stock_aging.js",
+  "scripts": {
+    "start": "node scripts/run-job-stock_aging.js stock_aging",
+    "dev:stock_aging": "node scripts/run-job-stock_aging.js stock_aging >> logs/stock_aging.log 2>&1",
+    "banners": "node scripts/make-banners.js",
+    "serve-banners": "node scripts/serve-banners.js",
+    "dry-run": "node scripts/run-job-stock_aging.js stock_aging --dry-run",
+    "test": "node --test tests/*.test.js"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^1.18.1",
+    "dotenv": "^17.4.2",
+    "exceljs": "^4.4.0",
+    "form-data": "^4.0.6",
+    "mssql": "^12.7.0"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5"
+  }
+}

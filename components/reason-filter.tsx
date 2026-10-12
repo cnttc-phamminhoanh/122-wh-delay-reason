@@ -13,10 +13,11 @@ export type ReasonStatus = 'all' | 'missing' | 'filled'
 export type Filters = {
   goodsNo: string
   lot: string
+  buyer: string
   status: ReasonStatus
 }
 
-export const emptyFilters: Filters = { goodsNo: '', lot: '', status: 'all' }
+export const emptyFilters: Filters = { goodsNo: '', lot: '',buyer: '', status: 'all' }
 
 const statusOptions: { value: ReasonStatus; label: string; hint: string }[] = [
   { value: 'all', label: 'Tất cả', hint: 'Hiển thị mọi bản ghi' },
@@ -25,7 +26,7 @@ const statusOptions: { value: ReasonStatus; label: string; hint: string }[] = [
 ]
 
 export function countActiveFilters(filters: Filters) {
-  return [filters.goodsNo.trim(), filters.lot.trim(), filters.status !== 'all'].filter(Boolean).length
+  return [filters.goodsNo.trim(), filters.lot.trim(), filters.buyer.trim(), filters.status !== 'all'].filter(Boolean).length
 }
 
 type Props = {
@@ -86,6 +87,15 @@ export function ReasonFilter({ value, onApply }: Props) {
                 id="filter-lot"
                 value={draft.lot}
                 onChange={(e) => setDraft({ ...draft, lot: e.target.value })}
+                placeholder="Chứa..."
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="filter-buyer">Buyer</Label>
+              <Input
+                id="filter-buyer"
+                value={draft.buyer}
+                onChange={(e) => setDraft({ ...draft, buyer: e.target.value })}
                 placeholder="Chứa..."
               />
             </div>
