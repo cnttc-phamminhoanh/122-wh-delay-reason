@@ -1,0 +1,23 @@
+{
+  "rules": [
+    {
+      "name": "CARTERS",
+      "match": ["CARTERS"],
+      "userIds": ["jennifer","AMeng"]
+    },
+    {
+      "name": "HADDAD",
+      "match": ["HADDAD"],
+      "userIds": ["775901663", "AMeng"]
+    },
+    {
+      "name": "NEXT",
+      "match": ["NEXT"],
+      "userIds": ["938506767","AMeng"]
+    }
+  ],
+  "default": {
+    "name": "OTHER",
+    "userIds": ["13829171527"]
+  }
+}
