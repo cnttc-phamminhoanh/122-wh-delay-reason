@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useLang } from '@/lib/i18n'
 
 export type FormValues = {
   goodsNo: string
@@ -27,6 +28,7 @@ type Props = {
 }
 
 export function ReasonForm({ values, source, onChange, onReset, onSaved }: Props) {
+  const { t } = useLang()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,14 +46,10 @@ export function ReasonForm({ values, source, onChange, onReset, onSaved }: Props
         body: JSON.stringify(values),
       })
       const data = await response.json()
-      if (!response.ok) throw new Error(data.error ?? 'Lưu thất bại')
-      onSaved(
-        data.action === 'UPDATE'
-          ? `Đã cập nhật ${data.goods_no} / ${data.made_lot}`
-          : `Đã thêm mới ${data.goods_no} / ${data.made_lot}`,
-      )
+      if (!response.ok) throw new Error(data.error ?? t.saveFailed)
+      onSaved(data.action === 'UPDATE' ? t.savedUpdate(data.goods_no, data.made_lot) : t.savedNew(data.goods_no, data.made_lot))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lưu thất bại')
+      setError(err instanceof Error ? err.message : t.saveFailed)
     } finally {
       setSaving(false)
     }
@@ -61,7 +59,7 @@ export function ReasonForm({ values, source, onChange, onReset, onSaved }: Props
     <Card className="overflow-hidden border-primary/15 py-0 shadow-sm">
       <div className="h-1 bg-primary" aria-hidden="true" />
       <CardHeader className="pt-5">
-        <CardTitle className="text-base">Nhập Delay Reason</CardTitle>
+        <CardTitle className="text-base">{t.enterReason}</CardTitle>
       </CardHeader>
       <CardContent className="pb-6">
         {prefilled && (
@@ -72,8 +70,7 @@ export function ReasonForm({ values, source, onChange, onReset, onSaved }: Props
               <PencilLine className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             )}
             <p className="text-pretty">
-              {source === 'link' ? 'Đã điền sẵn từ báo cáo BI.' : 'Đã điền từ dòng bạn chọn.'} Bạn có thể sửa Goods
-              No / Lot nếu cần.
+              {source === 'link' ? t.prefilledLink : t.prefilledRow} {t.editHint}
             </p>
           </div>
         )}
@@ -82,7 +79,7 @@ export function ReasonForm({ values, source, onChange, onReset, onSaved }: Props
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="goodsNo">
-                Goods No <span className="text-destructive">*</span>
+                {t.itemsNo} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="goodsNo"
@@ -90,13 +87,13 @@ export function ReasonForm({ values, source, onChange, onReset, onSaved }: Props
                 maxLength={50}
                 value={values.goodsNo}
                 onChange={(e) => update('goodsNo')(e.target.value)}
-                placeholder="VD: GD-001"
+                placeholder={t.placeholderGoods}
                 className="bg-muted/60 font-medium"
               />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="lot">
-                Lot <span className="text-destructive">*</span>
+                {t.lot} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="lot"
@@ -104,13 +101,13 @@ export function ReasonForm({ values, source, onChange, onReset, onSaved }: Props
                 maxLength={50}
                 value={values.lot}
                 onChange={(e) => update('lot')(e.target.value)}
-                placeholder="VD: LOT2026"
+                placeholder={t.placeholderLot}
                 className="bg-muted/60 font-medium"
               />
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="reason">Delay Reason</Label>
+            <Label htmlFor="reason">{t.delayReason}</Label>
             <Textarea
               id="reason"
               maxLength={500}
@@ -118,7 +115,7 @@ export function ReasonForm({ values, source, onChange, onReset, onSaved }: Props
               autoFocus={prefilled}
               value={values.reason}
               onChange={(e) => update('reason')(e.target.value)}
-              placeholder="Nhập lý do chậm trễ..."
+              placeholder={t.placeholderReason}
               className="resize-y"
             />
             <p className="text-right text-xs text-muted-foreground tabular-nums">{values.reason.length}/500</p>
@@ -133,7 +130,7 @@ export function ReasonForm({ values, source, onChange, onReset, onSaved }: Props
           <div className="flex gap-2 pt-1">
             <Button type="submit" disabled={saving} className="flex-1">
               <Save />
-              {saving ? 'Đang lưu...' : 'Lưu'}
+              {saving ? t.saving : t.save}
             </Button>
             <Button
               type="button"
@@ -144,7 +141,7 @@ export function ReasonForm({ values, source, onChange, onReset, onSaved }: Props
               }}
             >
               <RotateCcw />
-              Làm mới
+              {t.resetForm}
             </Button>
           </div>
         </form>

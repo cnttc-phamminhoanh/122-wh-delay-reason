@@ -9,18 +9,21 @@ import { Input } from '@/components/ui/input'
 import { ReasonForm, emptyForm, type FormSource, type FormValues } from '@/components/reason-form'
 import { ReasonTable, rowKey } from '@/components/reason-table'
 import { ReasonFilter, emptyFilters, countActiveFilters, type Filters } from '@/components/reason-filter'
+import { useLang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
+
+const LOAD_ERROR = 'LOAD_ERROR'
 
 const fetcher = async (url: string): Promise<StockReason[]> => {
   const response = await fetch(url)
   const data = await response.json()
-  if (!response.ok) throw new Error(data.error ?? 'Không tải được dữ liệu')
+  if (!response.ok) throw new Error(data.error ?? LOAD_ERROR)
   return data
 }
 
 const isMissing = (row: StockReason) => !row.reason_dl || row.reason_dl.trim() === ''
 
-const statusLabel = { missing: 'Chưa có lý do', filled: 'Đã có lý do' } as const
+
 
 type Props = {
   initialGoodsNo: string
@@ -28,6 +31,7 @@ type Props = {
 }
 
 export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
+  const { t } = useLang()
   const [form, setForm] = useState<FormValues>({ ...emptyForm, goodsNo: initialGoodsNo, lot: initialLot })
   const [source, setSource] = useState<FormSource>(initialGoodsNo || initialLot ? 'link' : null)
   const [searchInput, setSearchInput] = useState('')
@@ -38,6 +42,9 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
   // State quản lý phân trang
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 20 // Hiển thị 20 bản ghi mỗi trang
+
+  
+  const statusLabel = { missing: t.missingReason, filled: t.hasReason } as const
 
   useEffect(() => {
     if (initialGoodsNo || initialLot) {
@@ -117,43 +124,43 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
   const paginatedRows = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   const chips = [
-    keyword && { label: `Từ khóa: ${keyword}`, clear: () => (setKeyword(''), setSearchInput('')) },
+    keyword && { label: `${t.keyword}: ${keyword}`, clear: () => (setKeyword(''), setSearchInput('')) },
     filters.goodsNo.trim() && {
-      label: `Goods No: ${filters.goodsNo.trim()}`,
+      label: `Items No: ${filters.goodsNo.trim()}`,
       clear: () => setFilters({ ...filters, goodsNo: '' }),
     },
-    filters.lot.trim() && { label: `Lot: ${filters.lot.trim()}`, clear: () => setFilters({ ...filters, lot: '' }) },
+    filters.lot.trim() && { label: `${t.lot}: ${filters.lot.trim()}`, clear: () => setFilters({ ...filters, lot: '' }) },
     filters.status !== 'all' && {
       label: statusLabel[filters.status],
       clear: () => setFilters({ ...filters, status: 'all' }),
     },
     filters.buyer.trim() && {
-      label: `Buyer: ${filters.buyer.trim()}`,
+      label: `${t.buyer}: ${filters.buyer.trim()}`,
       clear: () => setFilters({ ...filters, buyer: '' }),
     },
   ].filter(Boolean) as { label: string; clear: () => void }[]
 
   return (
     <div className="flex flex-col gap-6">
-      <section aria-label="Thống kê" className="grid gap-4 sm:grid-cols-3">
-        <StatCard icon={Database} label="Tổng bản ghi" value={error ? '—' : rows.length} tone="primary" />
+      <section aria-label={t.statistics} className="grid gap-4 sm:grid-cols-3">
+        <StatCard icon={Database} label={t.totalRecords} value={error ? '—' : rows.length} tone="primary" />
         <StatCard
           icon={AlertTriangle}
-          label="Chưa có lý do"
+          label={t.missingReason}
           value={error ? '—' : missingCount}
           tone="warning"
           onClick={() => setFilters({ ...filters, status: 'missing' })}
-          actionLabel="Lọc ngay"
+          actionLabel={t.filterNow}
         />
         <StatCard
           icon={CircleCheckBig}
-          label="Đã có lý do"
+          label={t.hasReason}
           value={error ? '—' : rows.length - missingCount}
           tone="success"
         />
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[340px_minmax(0,1fr)] 2xl:grid-cols-[380px_minmax(0,1fr)]">
         <div className="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start">
           <ReasonForm values={form} source={source} onChange={setForm} onReset={handleReset} onSaved={handleSaved} />
           {notice && (
@@ -175,7 +182,7 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 id="list-title" className="text-base font-semibold tracking-tight">
-                  Danh sách 
+                  {t.list}
                 </h2>
               </div>
               <Button
@@ -183,7 +190,7 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
                 size="icon"
                 onClick={() => mutate()}
                 disabled={isValidating}
-                aria-label="Tải lại"
+                aria-label={t.reload}
                 className="text-muted-foreground"
               >
                 <RefreshCw className={isValidating ? 'animate-spin' : undefined} />
@@ -193,7 +200,7 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
             <div className="flex flex-col gap-2 sm:flex-row">
               <form role="search" onSubmit={handleSearch} className="flex flex-1 gap-2">
                 <label htmlFor="keyword" className="sr-only">
-                  Tìm theo Goods No hoặc Lot hoặc Buyer
+                  {t.searchLabel}
                 </label>
                 <div className="relative flex-1">
                   <Search
@@ -205,13 +212,13 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
                     type="search"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Tìm theo Goods No hoặc Lot hoặc Buyer..."
+                    placeholder={t.searchPlaceholder}
                     className="h-10 bg-muted/40 pl-9"
                   />
                 </div>
                 <Button type="submit" className="h-10 px-5">
                   <Search />
-                  Tìm kiếm
+                  {t.search}
                 </Button>
               </form>
               <ReasonFilter value={filters} onApply={setFilters} />
@@ -228,7 +235,7 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
                     <button
                       type="button"
                       onClick={chip.clear}
-                      aria-label={`Bỏ ${chip.label}`}
+                      aria-label={`${t.remove} ${chip.label}`}
                       className="rounded-full p-0.5 hover:bg-primary/10"
                     >
                       <X className="size-3.5" />
@@ -240,7 +247,7 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
                   onClick={clearAll}
                   className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                 >
-                  Xóa tất cả
+                  {t.clearAll}
                 </button>
               </div>
             )}
@@ -249,17 +256,17 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
           <div className="flex flex-col gap-3 p-5">
             {error ? (
               <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {error.message}
+                {error.message === LOAD_ERROR ? t.loadError : error.message}
               </p>
             ) : isLoading && !data ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">Đang tải...</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">{t.loading}</p>
             ) : rows.length === 0 ? (
               <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-12 text-center">
                 <Search className="size-6 text-muted-foreground" aria-hidden="true" />
-                <p className="text-sm font-medium">Không có dữ liệu phù hợp</p>
+                <p className="text-sm font-medium">{t.noData}</p>
                 {hasCriteria && (
                   <Button variant="link" size="sm" onClick={clearAll}>
-                    Xóa bộ lọc
+                    {t.clearFilters}
                   </Button>
                 )}
               </div>
@@ -274,8 +281,11 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
                 {/* Thanh điều hướng Phân trang */}
                 <div className="flex flex-col items-center justify-between gap-3 border-t pt-4 sm:flex-row">
                   <p className="text-xs text-muted-foreground">
-                    Hiển thị <b>{rows.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}</b> -{' '}
-                    <b>{Math.min(currentPage * pageSize, rows.length)}</b> trên tổng số <b>{rows.length}</b> bản ghi
+                    {t.showing(
+                      rows.length === 0 ? 0 : (currentPage - 1) * pageSize + 1,
+                      Math.min(currentPage * pageSize, rows.length),
+                      rows.length,
+                    )}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -285,9 +295,9 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
                       disabled={currentPage === 1}
                       className="h-8 px-3 text-xs"
                     >
-                      Trang trước
+                      {t.prevPage}
                     </Button>
-                    <span className="text-xs font-medium px-1">
+                    <span className="px-1 text-xs font-medium">
                       {currentPage} / {totalPages}
                     </span>
                     <Button
@@ -297,7 +307,7 @@ export function ReasonManager({ initialGoodsNo, initialLot }: Props) {
                       disabled={currentPage === totalPages}
                       className="h-8 px-3 text-xs"
                     >
-                      Trang sau
+                      {t.nextPage}
                     </Button>
                   </div>
                 </div>
