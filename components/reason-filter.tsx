@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { useLang } from '@/lib/i18n'
 
 export type ReasonStatus = 'all' | 'missing' | 'filled'
 
@@ -17,13 +18,7 @@ export type Filters = {
   status: ReasonStatus
 }
 
-export const emptyFilters: Filters = { goodsNo: '', lot: '',buyer: '', status: 'all' }
-
-const statusOptions: { value: ReasonStatus; label: string; hint: string }[] = [
-  { value: 'all', label: 'Tất cả', hint: 'Hiển thị mọi bản ghi' },
-  { value: 'missing', label: 'Chưa có lý do', hint: 'Delay Reason NULL hoặc rỗng' },
-  { value: 'filled', label: 'Đã có lý do', hint: 'Đã nhập Delay Reason' },
-]
+export const emptyFilters: Filters = { goodsNo: '', lot: '', buyer: '', status: 'all' }
 
 export function countActiveFilters(filters: Filters) {
   return [filters.goodsNo.trim(), filters.lot.trim(), filters.buyer.trim(), filters.status !== 'all'].filter(Boolean).length
@@ -35,9 +30,16 @@ type Props = {
 }
 
 export function ReasonFilter({ value, onApply }: Props) {
+  const { t } = useLang()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<Filters>(value)
   const activeCount = countActiveFilters(value)
+
+  const statusOptions: { value: ReasonStatus; label: string; hint: string }[] = [
+    { value: 'all', label: t.all, hint: t.allHint },
+    { value: 'missing', label: t.missingReason, hint: t.missingHint },
+    { value: 'filled', label: t.hasReason, hint: t.filledHint },
+  ]
 
   function handleOpenChange(next: boolean) {
     if (next) setDraft(value)
@@ -53,7 +55,7 @@ export function ReasonFilter({ value, onApply }: Props) {
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger render={<Button variant="outline" className="h-10 gap-2 bg-card px-4" />}>
         <SlidersHorizontal />
-        Bộ lọc
+        {t.filter}
         {activeCount > 0 && (
           <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
             {activeCount}
@@ -68,39 +70,39 @@ export function ReasonFilter({ value, onApply }: Props) {
           }}
         >
           <div className="border-b px-4 py-3">
-            <p className="text-sm font-semibold">Bộ lọc nâng cao</p>
-            <p className="text-xs text-muted-foreground">Lọc chính xác theo từng trường</p>
+            <p className="text-sm font-semibold">{t.advancedFilter}</p>
+            <p className="text-xs text-muted-foreground">{t.advancedFilterHint}</p>
           </div>
           <div className="flex flex-col gap-4 px-4 py-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="filter-goods">Goods No</Label>
+              <Label htmlFor="filter-goods">{t.itemsNo}</Label>
               <Input
                 id="filter-goods"
                 value={draft.goodsNo}
                 onChange={(e) => setDraft({ ...draft, goodsNo: e.target.value })}
-                placeholder="Chứa..."
+                placeholder={t.contains}
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="filter-lot">Lot</Label>
+              <Label htmlFor="filter-lot">{t.lot}</Label>
               <Input
                 id="filter-lot"
                 value={draft.lot}
                 onChange={(e) => setDraft({ ...draft, lot: e.target.value })}
-                placeholder="Chứa..."
+                placeholder={t.contains}
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="filter-buyer">Buyer</Label>
+              <Label htmlFor="filter-buyer">{t.buyer}</Label>
               <Input
                 id="filter-buyer"
                 value={draft.buyer}
                 onChange={(e) => setDraft({ ...draft, buyer: e.target.value })}
-                placeholder="Chứa..."
+                placeholder={t.contains}
               />
             </div>
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-sm font-medium">Trạng thái Delay Reason</legend>
+              <legend className="mb-2 text-sm font-medium">{t.reasonStatus}</legend>
               <RadioGroup
                 value={draft.status}
                 onValueChange={(status) => setDraft({ ...draft, status: status as ReasonStatus })}
@@ -124,9 +126,9 @@ export function ReasonFilter({ value, onApply }: Props) {
           </div>
           <div className="flex justify-between gap-2 border-t bg-muted/50 px-4 py-3">
             <Button type="button" variant="ghost" onClick={() => apply(emptyFilters)}>
-              Đặt lại
+              {t.resetFilter}
             </Button>
-            <Button type="submit">Áp dụng</Button>
+            <Button type="submit">{t.apply}</Button>
           </div>
         </form>
       </PopoverContent>
