@@ -3,8 +3,14 @@ import sql from 'mssql'
 export type StockReason = {
   id: number
   goods_no: string
+  goods_name: string | null
   made_lot: string
+  unit_no: string | null
+  end_qty: number | null
+  end_usd: number | null
+  cust_style: string | null
   cust_name: string | null
+  age_days: number | null
   reason_dl: string | null
   updated_at: string
 }
@@ -108,34 +114,19 @@ export async function searchReasons({
 
   // Tìm theo goods_no
   if (goodsNo) {
-    request.input(
-      'goodsNo',
-      sql.NVarChar(50),
-      `%${goodsNo}%`
-    )
-
+    request.input('goodsNo', sql.NVarChar(50), `%${goodsNo}%`)
     conditions.push('r.goods_no LIKE @goodsNo')
   }
 
   // Tìm theo made_lot
   if (lot) {
-    request.input(
-      'lot',
-      sql.NVarChar(50),
-      `%${lot}%`
-    )
-
+    request.input('lot', sql.NVarChar(50), `%${lot}%`)
     conditions.push('r.made_lot LIKE @lot')
   }
 
   // Tìm theo Buyer
   if (buyer) {
-    request.input(
-      'buyer',
-      sql.NVarChar(100),
-      `%${buyer}%`
-    )
-
+    request.input('buyer', sql.NVarChar(100), `%${buyer}%`)
     conditions.push('s.cust_name LIKE @buyer')
   }
 
@@ -155,15 +146,27 @@ export async function searchReasons({
     SELECT
       r.id,
       r.goods_no,
+      s.goods_name,
       r.made_lot,
+      s.unit_no,
+      s.end_qty,
+      s.end_usd,
+      s.cust_style,
       s.cust_name,
+      s.age_days,
       r.reason_dl,
       r.updated_at
     FROM dbo.bi_stock_reason AS r
 
     OUTER APPLY (
       SELECT TOP (1)
-        st.cust_name
+        st.goods_name,
+        st.unit_no,
+        st.end_qty,
+        st.end_usd,
+        st.cust_style,
+        st.cust_name,
+        DATEDIFF(DAY, st.made_lot_date, GETDATE()) AS age_days
       FROM dbo.bi_stock AS st
       WHERE st.goods_no = r.goods_no
         AND st.made_lot = r.made_lot
@@ -199,22 +202,10 @@ export async function upsertReason({
 
   const result = await pool
     .request()
-    .input(
-      'goodsNo',
-      sql.NVarChar(50),
-      goodsNo
-    )
-    .input(
-      'lot',
-      sql.NVarChar(50),
-      lot
-    )
-    .input(
-      'reason',
-      sql.NVarChar(500),
-      reason || null
-    )
-    .query<StockReason & { action: string }>(`
+    .input('goodsNo', sql.NVarChar(50), goodsNo)
+    .input('lot', sql.NVarChar(50), lot)
+    .input('reason', sql.NVarChar(500), reason || null)
+    .query<Partial<StockReason> & { action: string }>(`
       MERGE dbo.bi_stock_reason WITH (HOLDLOCK) AS target
 
       USING (

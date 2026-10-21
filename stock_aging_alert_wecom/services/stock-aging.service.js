@@ -77,6 +77,7 @@ function toExcelRows(rows) {
     "Items Name": r.goods_name,
     Lot: r.made_lot,
     Unit: r.unit_no,
+    Quantity: r.end_qty,
     "PRICE USD": r.end_usd,
     "Cust Style": r.cust_style,
     Buyer: r.cust_name,
